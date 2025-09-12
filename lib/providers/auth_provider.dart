@@ -4,38 +4,65 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? user;
-  bool isInitialized = false;
-  bool isLoggedIn = false;
+  bool isLoading = true;
 
   AuthProvider() {
-    _auth.authStateChanges().listen((User? u) {
-      user = u;
-      isLoggedIn = user != null;
-      isInitialized = true;
+    _auth.authStateChanges().listen((User? firebaseUser) {
+      user = firebaseUser;
+      isLoading = false;
       notifyListeners();
     });
   }
 
-  Future<void> login(String email, String password) async {
-    UserCredential cred = await _auth.signInWithEmailAndPassword(
-        email: email, password: password);
-    user = cred.user;
-    isLoggedIn = user != null;
-    notifyListeners();
+  bool get isLoggedIn => user != null;
+
+  // معرف المستخدم الذي سيتم استخدامه مع العناصر
+  String get userId {
+    if (user == null) return "";
+    return user!.uid;
   }
 
-  Future<void> register(String email, String password) async {
-    UserCredential cred = await _auth.createUserWithEmailAndPassword(
-        email: email, password: password);
-    user = cred.user;
-    isLoggedIn = user != null;
-    notifyListeners();
+  // اسم المستخدم الحقيقي
+  String get userName {
+    if (user == null) return "User";
+    if (user!.displayName != null && user!.displayName!.isNotEmpty) {
+      return user!.displayName!;
+    }
+    // إذا ما في displayName نستخدم البريد قبل @
+    return user!.email!.split('@')[0];
+  }
+
+  Future<void> login({required String email, required String password}) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      user = _auth.currentUser;
+    } on FirebaseAuthException catch (e) {
+      throw e;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> register({required String email, required String password}) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      user = _auth.currentUser;
+    } on FirebaseAuthException catch (e) {
+      throw e;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> logout() async {
     await _auth.signOut();
     user = null;
-    isLoggedIn = false;
     notifyListeners();
   }
 }

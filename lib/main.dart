@@ -1,42 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
 import 'providers/item_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(MyApp());
+  await Firebase.initializeApp();
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
-          if (!auth.isInitialized) {
-            return MaterialApp(
-              home: Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              ),
-            );
-          }
-
-          if (!auth.isLoggedIn) {
-            return MaterialApp(home: LoginScreen());
-          }
-
-          return ChangeNotifierProvider(
-            create: (_) => ItemProvider(userId: auth.user!.uid),
-            child: MaterialApp(home: HomeScreen()),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (ctx, themeProv, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Exchange App',
+            theme: ThemeData(
+              primaryColor: const Color(0xFF4E6CFF),
+              scaffoldBackgroundColor: Colors.white,
+              brightness: Brightness.light,
+              appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
+            ),
+            darkTheme: ThemeData(
+              primaryColor: const Color(0xFF4E6CFF),
+              scaffoldBackgroundColor: Colors.black,
+              brightness: Brightness.dark,
+              appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
+            ),
+            themeMode: themeProv.themeMode, // ⚡ الربط مع ThemeProvider
+            initialRoute: '/',
+            routes: {
+              '/': (ctx) => const SplashScreen(),
+              '/login': (ctx) => const LoginScreen(),
+              '/onboarding': (ctx) => const OnboardingScreen(),
+            },
+            onGenerateRoute: (settings) {
+              if (settings.name == '/home') {
+                final userId = settings.arguments as String;
+                return MaterialPageRoute(
+                  builder: (ctx) => ChangeNotifierProvider(
+                    create: (_) => ItemProvider(currentUserId: userId),
+                    child: HomeScreen(currentUserId: userId),
+                  ),
+                );
+              }
+              return null;
+            },
           );
         },
       ),

@@ -1,69 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/item.dart';
+import '../providers/item_provider.dart';
+import 'package:uuid/uuid.dart';
 
-class AddItemScreen extends StatefulWidget {
+class AddItemDialog extends StatefulWidget {
+  final String currentUserId;
+  const AddItemDialog({super.key, required this.currentUserId});
+
   @override
-  State<AddItemScreen> createState() => _AddItemScreenState();
+  State<AddItemDialog> createState() => _AddItemDialogState();
 }
 
-class _AddItemScreenState extends State<AddItemScreen> {
+class _AddItemDialogState extends State<AddItemDialog> {
   final _formKey = GlobalKey<FormState>();
-  String title = '';
-  String description = '';
-  String? imageUrl;
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+  final _imageUrlController = TextEditingController();
+  String _category = "book";
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('إضافة غرض جديد')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
+    return AlertDialog(
+      title: const Text("Add Item"),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                decoration: InputDecoration(labelText: 'اسم الغرض'),
-                validator: (val) => val == null || val.isEmpty
-                    ? 'الرجاء إدخال اسم الغرض'
-                    : null,
-                onSaved: (val) => title = val!.trim(),
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: "Title"),
+                validator: (val) => val!.isEmpty ? "Enter title" : null,
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: 'وصف الغرض'),
-                maxLines: 3,
-                validator: (val) => val == null || val.isEmpty
-                    ? 'الرجاء إدخال وصف الغرض'
-                    : null,
-                onSaved: (val) => description = val!.trim(),
+                controller: _descController,
+                decoration: const InputDecoration(labelText: "Description"),
+                validator: (val) => val!.isEmpty ? "Enter description" : null,
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: 'رابط صورة (اختياري)'),
-                onSaved: (val) {
-                  if (val != null && val.trim().isNotEmpty)
-                    imageUrl = val.trim();
-                },
+                controller: _imageUrlController,
+                decoration: const InputDecoration(labelText: "Image URL (optional)"),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                child: Text('إضافة'),
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    final newItem = Item(
-                      id: '',
-                      title: title,
-                      description: description,
-                      imageUrl: imageUrl,
-                    );
-                    Navigator.pop(context, newItem);
-                  }
-                },
+              DropdownButtonFormField<String>(
+                value: _category,
+                items: const [
+                  DropdownMenuItem(value: "book", child: Text("Book")),
+                  DropdownMenuItem(value: "stationery", child: Text("Stationery")),
+                ],
+                onChanged: (val) => setState(() => _category = val!),
+                decoration: const InputDecoration(labelText: "Category"),
               ),
             ],
           ),
         ),
       ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: _isSaving ? null : () async {
+            if (!_formKey.currentState!.validate()) return;
+            setState(() => _isSaving = true);
+
+            final newItem = Item(
+              id: const Uuid().v4(),
+              ownerId: widget.currentUserId,
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+              imageUrl: _imageUrlController.text.trim().isEmpty ? null : _imageUrlController.text.trim(),
+              category: _category,
+            );
+
+            final provider = Provider.of<ItemProvider>(context, listen: false);
+            await provider.addItem(newItem);
+
+            setState(() => _isSaving = false);
+            Navigator.pop(context);
+          },
+          child: _isSaving ? const CircularProgressIndicator(color: Colors.white) : const Text("Add"),
+        ),
+      ],
     );
   }
 }

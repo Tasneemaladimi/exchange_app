@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "title": "Book One",
+    "author": "Author A",
+    "description": "Description of Book One",
+    "imageUrl": "https://example.com/book1.jpg",
+    "year": 2022,
+    "category": "book",
+    "ownerId": "user1"
+  },
+  {
+    "id": "2",
+    "title": "Pen",
+    "author": "",
+    "description": "Blue pen",
+    "imageUrl": "",
+    "year": null,
+    "category": "stationery",
+    "ownerId": "user2"
+  }
+]
