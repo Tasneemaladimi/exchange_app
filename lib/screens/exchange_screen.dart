@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/item_provider.dart';
-import '../models/item.dart';
+import '../providers/product_provider.dart';
+import '../models/product.dart';
 
 class ExchangeScreen extends StatefulWidget {
   final String currentUserId;
@@ -13,75 +13,73 @@ class ExchangeScreen extends StatefulWidget {
 }
 
 class _ExchangeScreenState extends State<ExchangeScreen> {
-  Item? mySelectedItem;
-  Item? otherSelectedItem;
+  Product? mySelectedProduct;
+  Product? otherSelectedProduct;
 
   @override
   Widget build(BuildContext context) {
-    final itemProv = Provider.of<ItemProvider>(context);
+    final productProv = Provider.of<ProductProvider>(context);
 
-    final myItems = itemProv.getMyItems();
+    final myProducts = productProv.getMyProducts();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Exchange Items"),
+        title: const Text("Exchange Products"),
         backgroundColor: const Color(0xFF4E6CFF),
       ),
       body: Column(
         children: [
           const SizedBox(height: 10),
-          // اختيار عنصر المستخدم
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<Item>(
-              hint: const Text("Select your item"),
-              value: mySelectedItem,
+            child: DropdownButton<Product>(
+              hint: const Text("Select your product"),
+              value: mySelectedProduct,
               isExpanded: true,
-              items: myItems.map((item) {
+              items: myProducts.map((product) {
                 return DropdownMenuItem(
-                  value: item,
-                  child: Text(item.title),
+                  value: product,
+                  child: Text(product.title),
                 );
               }).toList(),
-              onChanged: (item) {
+              onChanged: (product) {
                 setState(() {
-                  mySelectedItem = item;
+                  mySelectedProduct = product;
                 });
               },
             ),
           ),
           const Divider(),
           const SizedBox(height: 10),
-          // عرض عناصر الآخرين من Firestore
           Expanded(
-            child: StreamBuilder<List<Item>>(
-              stream: itemProv.otherUsersItemsStream(),
+            child: StreamBuilder<List<Product>>(
+              stream: productProv.otherUsersProductsStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No items available for exchange"));
+                  return const Center(child: Text("No products available for exchange"));
                 }
 
-                final otherItems = snapshot.data!;
+                final otherProducts = snapshot.data!;
 
                 return ListView.builder(
-                  itemCount: otherItems.length,
+                  itemCount: otherProducts.length,
                   itemBuilder: (ctx, i) {
-                    final item = otherItems[i];
-                    final isSelected = item == otherSelectedItem;
+                    final product = otherProducts[i];
+                    final isSelected = product == otherSelectedProduct;
 
                     return ListTile(
-                      title: Text(item.title),
-                      subtitle: Text("Owner: ${item.ownerId}"),
+                      title: Text(product.title),
+                      subtitle: Text("Owner: ${product.ownerId}"),
                       trailing: isSelected
                           ? const Icon(Icons.check_circle, color: Colors.green)
                           : null,
                       onTap: () {
                         setState(() {
-                          otherSelectedItem = item;
+                          otherSelectedProduct = product;
                         });
                       },
                     );
@@ -90,19 +88,18 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
               },
             ),
           ),
-          // زر التبادل
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: ElevatedButton(
-              onPressed: (mySelectedItem != null && otherSelectedItem != null)
+              onPressed: (mySelectedProduct != null && otherSelectedProduct != null)
                   ? () async {
-                      await itemProv.exchangeItems(mySelectedItem!, otherSelectedItem!);
+                      await productProv.exchangeProducts(mySelectedProduct!, otherSelectedProduct!);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Items exchanged successfully")),
+                        const SnackBar(content: Text("Products exchanged successfully")),
                       );
                       setState(() {
-                        mySelectedItem = null;
-                        otherSelectedItem = null;
+                        mySelectedProduct = null;
+                        otherSelectedProduct = null;
                       });
                     }
                   : null,

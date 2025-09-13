@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import '../models/item.dart';
+import '../models/product.dart';
 
-class ItemCard extends StatelessWidget {
-  final Item item;
+class ProductCard extends StatelessWidget {
+  final Product product;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
   final Color? borderColor;
 
-  const ItemCard({
-    required this.item,
+  const ProductCard({
+    required this.product,
     this.onTap,
     this.onDelete,
     this.onEdit,
@@ -31,25 +31,25 @@ class ItemCard extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        leading: item.imageUrl != null && item.imageUrl!.isNotEmpty
+        leading: product.imageUrl != null && product.imageUrl!.isNotEmpty
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  item.imageUrl!,
+                  product.imageUrl!,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
                 ),
               )
             : Icon(
-                item.category == "book" ? Icons.book : Icons.create,
+                product.category == "book" ? Icons.book : Icons.create,
                 size: 60,
                 color: Theme.of(context).primaryColor,
               ),
-        title: Text(item.title,
+        title: Text(product.title,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        subtitle: item.description.isNotEmpty
-            ? Text(item.description,
+        subtitle: product.description.isNotEmpty
+            ? Text(product.description,
                 maxLines: 2, overflow: TextOverflow.ellipsis)
             : null,
         trailing: Row(

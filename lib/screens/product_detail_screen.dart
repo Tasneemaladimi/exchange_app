@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/item.dart';
-import '../db/database_helper.dart';
-import '../providers/item_provider.dart';
+import '../models/product.dart';
+import '../providers/product_provider.dart';
 
-class ItemDetailScreen extends StatefulWidget {
-  final Item item; // تعديل: تمرير العنصر بالكامل
-  const ItemDetailScreen({required this.item, super.key});
+class ProductDetailScreen extends StatefulWidget {
+  final Product product;
+  const ProductDetailScreen({required this.product, super.key});
 
   @override
-  State<ItemDetailScreen> createState() => _ItemDetailScreenState();
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ItemDetailScreenState extends State<ItemDetailScreen> {
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
 
@@ -21,21 +20,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   late TextEditingController _imageUrlController;
   late String _category;
 
-  late Item _item;
+  late Product _product;
 
   @override
   void initState() {
     super.initState();
-    _item = widget.item;
-    _titleController = TextEditingController(text: _item.title);
-    _descController = TextEditingController(text: _item.description);
-    _imageUrlController = TextEditingController(text: _item.imageUrl ?? '');
-    _category = _item.category;
+    _product = widget.product;
+    _titleController = TextEditingController(text: _product.title);
+    _descController = TextEditingController(text: _product.description);
+    _imageUrlController = TextEditingController(text: _product.imageUrl ?? '');
+    _category = _product.category;
   }
 
   Future<void> _saveChanges() async {
     setState(() => _isSaving = true);
-    final updatedItem = _item.copyWith(
+    final updatedProduct = _product.copyWith(
       title: _titleController.text.trim(),
       description: _descController.text.trim(),
       imageUrl: _imageUrlController.text.trim().isEmpty
@@ -44,32 +43,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       category: _category,
     );
 
-    // حفظ محلي
-    await DBHelper.updateItem(updatedItem);
-    // تحديث Provider
-    final provider = Provider.of<ItemProvider>(context, listen: false);
-    provider.updateLocalItem(updatedItem);
-    // تحديث Firestore
-    provider.updateItem(updatedItem);
+    final provider = Provider.of<ProductProvider>(context, listen: false);
+    await provider.updateProduct(updatedProduct);
 
     setState(() {
       _isEditing = false;
       _isSaving = false;
-      _item = updatedItem;
+      _product = updatedProduct;
     });
 
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Item updated")));
+        .showSnackBar(const SnackBar(content: Text("Product updated")));
   }
 
-  Future<void> _deleteItem() async {
-    // حذف محلي
-    await DBHelper.deleteItem(_item.id);
-    final provider = Provider.of<ItemProvider>(context, listen: false);
-    provider.removeLocalItem(_item.id);
-    // حذف من Firestore
-    provider.removeItem(_item.id);
-
+  Future<void> _deleteProduct() async {
+    final provider = Provider.of<ProductProvider>(context, listen: false);
+    await provider.removeProduct(_product.id);
     Navigator.pop(context);
   }
 
@@ -77,7 +66,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Item Details"),
+        title: const Text("Product Details"),
         backgroundColor: const Color(0xFF4E6CFF),
       ),
       body: Padding(
@@ -91,14 +80,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_item.imageUrl != null)
-          Center(child: Image.network(_item.imageUrl!, height: 180, fit: BoxFit.cover)),
+        if (_product.imageUrl != null)
+          Center(child: Image.network(_product.imageUrl!, height: 180, fit: BoxFit.cover)),
         const SizedBox(height: 16),
-        Text(_item.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(_product.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(_item.description, style: const TextStyle(fontSize: 16)),
+        Text(_product.description, style: const TextStyle(fontSize: 16)),
         const SizedBox(height: 8),
-        Text("Category: ${_item.category}", style: const TextStyle(color: Colors.grey)),
+        Text("Category: ${_product.category}", style: const TextStyle(color: Colors.grey)),
+        const SizedBox(height: 8),
+        Text("Status: ${_product.status}", style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 20),
         Row(
           children: [
@@ -109,7 +100,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: _deleteItem,
+              onPressed: _deleteProduct,
               child: const Text("Delete"),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),

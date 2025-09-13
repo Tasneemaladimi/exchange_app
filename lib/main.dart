@@ -3,7 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/item_provider.dart';
+import 'providers/product_provider.dart';
+import 'providers/exchange_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
@@ -24,6 +25,25 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
+          create: (_) => ProductProvider(currentUserId: null, products: []),
+          update: (ctx, auth, previousProductProvider) {
+            if (auth.currentUser?.id != previousProductProvider?.currentUserId) {
+              final newProvider = ProductProvider(currentUserId: auth.currentUser?.id);
+              if (auth.currentUser != null) {
+                newProvider.fetchMyProducts();
+              }
+              return newProvider;
+            }
+            return previousProductProvider!;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ExchangeProvider>(
+          create: (_) => ExchangeProvider(null),
+          update: (ctx, auth, previousExchangeProvider) {
+            return ExchangeProvider(auth.currentUser?.id);
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (ctx, themeProv, _) {
@@ -42,24 +62,12 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
             ),
-            themeMode: themeProv.themeMode, // ⚡ الربط مع ThemeProvider
-            initialRoute: '/',
+            themeMode: themeProv.themeMode,
+            home: const SplashScreen(),
             routes: {
-              '/': (ctx) => const SplashScreen(),
               '/login': (ctx) => const LoginScreen(),
               '/onboarding': (ctx) => const OnboardingScreen(),
-            },
-            onGenerateRoute: (settings) {
-              if (settings.name == '/home') {
-                final userId = settings.arguments as String;
-                return MaterialPageRoute(
-                  builder: (ctx) => ChangeNotifierProvider(
-                    create: (_) => ItemProvider(currentUserId: userId),
-                    child: HomeScreen(currentUserId: userId),
-                  ),
-                );
-              }
-              return null;
+              '/home': (ctx) => const HomeScreen(),
             },
           );
         },
