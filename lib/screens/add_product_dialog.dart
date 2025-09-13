@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/item.dart';
-import '../providers/item_provider.dart';
+import '../models/product.dart';
+import '../providers/product_provider.dart';
 import 'package:uuid/uuid.dart';
 
-class AddItemDialog extends StatefulWidget {
+class AddProductDialog extends StatefulWidget {
   final String currentUserId;
-  const AddItemDialog({super.key, required this.currentUserId});
+  const AddProductDialog({super.key, required this.currentUserId});
 
   @override
-  State<AddItemDialog> createState() => _AddItemDialogState();
+  State<AddProductDialog> createState() => _AddProductDialogState();
 }
 
-class _AddItemDialogState extends State<AddItemDialog> {
+class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
@@ -23,7 +23,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Add Item"),
+      title: const Text("Add Product"),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -64,7 +64,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
             if (!_formKey.currentState!.validate()) return;
             setState(() => _isSaving = true);
 
-            final newItem = Item(
+            final newProduct = Product(
               id: const Uuid().v4(),
               ownerId: widget.currentUserId,
               title: _titleController.text.trim(),
@@ -73,8 +73,8 @@ class _AddItemDialogState extends State<AddItemDialog> {
               category: _category,
             );
 
-            final provider = Provider.of<ItemProvider>(context, listen: false);
-            await provider.addItem(newItem);
+            final provider = Provider.of<ProductProvider>(context, listen: false);
+            await provider.addProduct(newProduct);
 
             setState(() => _isSaving = false);
             Navigator.pop(context);

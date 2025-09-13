@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/item.dart';
-import '../providers/item_provider.dart';
+import '../models/product.dart';
+import '../providers/product_provider.dart';
 
-class EditItemDialog extends StatefulWidget {
-  final Item item;
-  const EditItemDialog({required this.item, super.key});
+class EditProductDialog extends StatefulWidget {
+  final Product product;
+  const EditProductDialog({required this.product, super.key});
 
   @override
-  State<EditItemDialog> createState() => _EditItemDialogState();
+  State<EditProductDialog> createState() => _EditProductDialogState();
 }
 
-class _EditItemDialogState extends State<EditItemDialog> {
+class _EditProductDialogState extends State<EditProductDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _descController;
@@ -21,16 +21,16 @@ class _EditItemDialogState extends State<EditItemDialog> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.item.title);
-    _descController = TextEditingController(text: widget.item.description);
-    _imageUrlController = TextEditingController(text: widget.item.imageUrl ?? "");
-    selectedCategory = widget.item.category;
+    _titleController = TextEditingController(text: widget.product.title);
+    _descController = TextEditingController(text: widget.product.description);
+    _imageUrlController = TextEditingController(text: widget.product.imageUrl ?? "");
+    selectedCategory = widget.product.category;
   }
 
-  void _saveItem() {
+  void _saveProduct() {
     if (!_formKey.currentState!.validate()) return;
 
-    final updatedItem = widget.item.copyWith(
+    final updatedProduct = widget.product.copyWith(
       title: _titleController.text.trim(),
       description: _descController.text.trim(),
       imageUrl: _imageUrlController.text.trim().isEmpty
@@ -39,7 +39,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
       category: selectedCategory,
     );
 
-    Provider.of<ItemProvider>(context, listen: false).updateLocalItem(updatedItem);
+    Provider.of<ProductProvider>(context, listen: false).updateProduct(updatedProduct);
     Navigator.pop(context);
   }
 
@@ -58,7 +58,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "Edit Item",
+                "Edit Product",
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
                       child: const Text("Cancel")),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                      onPressed: _saveItem,
+                      onPressed: _saveProduct,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         padding: const EdgeInsets.symmetric(

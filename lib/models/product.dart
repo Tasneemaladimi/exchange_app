@@ -1,35 +1,45 @@
-class Item {
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class Product {
   final String id;
   final String ownerId;
   final String title;
   final String description;
   final String? imageUrl;
-  final String category; // "book" أو "stationery"
+  final String category;
+  final String status;
+  final Timestamp createdAt;
 
-  Item({
+  Product({
     required this.id,
     required this.ownerId,
     required this.title,
     required this.description,
     this.imageUrl,
     required this.category,
-  });
+    this.status = 'available',
+    Timestamp? createdAt,
+  }) : createdAt = createdAt ?? Timestamp.now();
 
-  Item copyWith({
+  Product copyWith({
     String? id,
     String? ownerId,
     String? title,
     String? description,
     String? imageUrl,
     String? category,
+    String? status,
+    Timestamp? createdAt,
   }) {
-    return Item(
+    return Product(
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       title: title ?? this.title,
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
@@ -39,23 +49,23 @@ class Item {
       'ownerId': ownerId,
       'title': title,
       'description': description,
-      'imageUrl': imageUrl ?? '',
+      'imageUrl': imageUrl,
       'category': category,
+      'status': status,
+      'createdAt': createdAt,
     };
   }
 
-  factory Item.fromJson(Map<String, dynamic> json) {
-    return Item(
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
       id: json['id'],
       ownerId: json['ownerId'],
       title: json['title'],
       description: json['description'],
-      imageUrl: json['imageUrl'] == '' ? null : json['imageUrl'],
+      imageUrl: json['imageUrl'],
       category: json['category'],
+      status: json['status'] ?? 'available',
+      createdAt: json['createdAt'] ?? Timestamp.now(),
     );
   }
-
-  Map<String, dynamic> toMap() => toJson();
-
-  factory Item.fromMap(Map<String, dynamic> map) => Item.fromJson(map);
 }

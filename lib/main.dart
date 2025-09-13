@@ -3,7 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
-import 'providers/item_provider.dart';
+import 'providers/product_provider.dart';
+import 'providers/exchange_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/login_screen.dart';
@@ -24,23 +25,23 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProxyProvider<AuthProvider, ItemProvider>(
-          // Provides an initial, empty provider for the logged-out state.
-          create: (_) => ItemProvider(currentUserId: null, items: []),
-          // When AuthProvider changes, this rebuilds ItemProvider.
-          update: (ctx, auth, previousItemProvider) {
-            // If the user's login status changes, we create a new provider.
-            // This ensures data is cleared upon logout.
-            if (auth.currentUser?.id != previousItemProvider?.currentUserId) {
-              final newProvider = ItemProvider(currentUserId: auth.currentUser?.id);
-              // If the user is logged in, immediately trigger a data fetch.
+        ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
+          create: (_) => ProductProvider(currentUserId: null, products: []),
+          update: (ctx, auth, previousProductProvider) {
+            if (auth.currentUser?.id != previousProductProvider?.currentUserId) {
+              final newProvider = ProductProvider(currentUserId: auth.currentUser?.id);
               if (auth.currentUser != null) {
-                newProvider.fetchAndSetItems();
+                newProvider.fetchMyProducts();
               }
               return newProvider;
             }
-            // If the user ID is the same, we can return the previous provider.
-            return previousItemProvider!;
+            return previousProductProvider!;
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, ExchangeProvider>(
+          create: (_) => ExchangeProvider(null),
+          update: (ctx, auth, previousExchangeProvider) {
+            return ExchangeProvider(auth.currentUser?.id);
           },
         ),
       ],
