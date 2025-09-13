@@ -1,76 +1,74 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/item.dart';
 import '../db/database_helper.dart';
 
 class ItemProvider extends ChangeNotifier {
-  final String currentUserId; // معرف المستخدم الحالي
+  final String? currentUserId;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription? _itemsSubscription;
 
-  List<Item> _items = [];
+  List<Item> _items;
   List<Item> get items => _items;
 
-  ItemProvider({required this.currentUserId}) {
+  ItemProvider({this.currentUserId, List<Item> items = const []}) : _items = items {
+    if (currentUserId != null) {
       print("✅ ItemProvider created for user: $currentUserId");
-    loadLocalItems();
-  }
-
-  /// تحميل العناصر المحفوظة محليًا
-  Future<void> loadLocalItems() async {
-    _items = await DBHelper.getItems();
-    notifyListeners();
-  }
-
-  /// إضافة عنصر جديد (محلي + Firestore)
-  Future<void> addItem(Item item, {bool saveToFirestore = false}) async {
-    // حفظ محلي
-    await DBHelper.insertItem(item);
-    _items.add(item);
-    notifyListeners();
-
-    // حفظ في Firestore إذا مطلوب
-    if (saveToFirestore) {
-      await _firestore.collection('items').doc(item.id).set(item.toJson());
+    } else {
+      print("✅ ItemProvider created for logged-out user.");
     }
   }
 
-  /// تحديث عنصر (محلي + Firestore)
-  Future<void> updateItem(Item item, {bool updateFirestore = false}) async {
-    // تحديث محلي
-    await DBHelper.updateItem(item);
-    updateLocalItem(item);
-
-    // تحديث Firestore إذا مطلوب
-    if (updateFirestore) {
-      await _firestore.collection('items').doc(item.id).update(item.toJson());
-    }
+  @override
+  void dispose() {
+    _itemsSubscription?.cancel();
+    super.dispose();
   }
 
-  /// حذف عنصر (محلي + Firestore)
-  Future<void> removeItem(String id, {bool removeFromFirestore = false}) async {
-    // حذف محلي
-    await DBHelper.deleteItem(id);
-    removeLocalItem(id);
-
-    // حذف من Firestore إذا مطلوب
-    if (removeFromFirestore) {
-      await _firestore.collection('items').doc(id).delete();
-    }
-  }
-
-  /// تحديث عنصر موجود في قائمة العناصر المحلية فقط
-  void updateLocalItem(Item item) {
-    final index = _items.indexWhere((e) => e.id == item.id);
-    if (index != -1) {
-      _items[index] = item;
+  /// Sets up a real-time stream from Firestore to fetch and sync items.
+  void fetchAndSetItems() {
+    if (currentUserId == null) {
+      _items = [];
       notifyListeners();
+      return;
     }
+
+    _itemsSubscription?.cancel();
+    _itemsSubscription = _firestore
+        .collection('items')
+        .where('ownerId', isEqualTo: currentUserId)
+        .snapshots()
+        .listen((snapshot) async {
+      final firestoreItems = snapshot.docs.map((doc) => Item.fromJson(doc.data())).toList();
+      _items = firestoreItems;
+      notifyListeners();
+
+      // Update local cache
+      await DBHelper.clearItems();
+      for (var item in _items) {
+        await DBHelper.insertItem(item);
+      }
+      print("🔄 Local cache synced with Firestore.");
+    }, onError: (error) {
+      print("Error fetching items: $error");
+      // Optionally handle error state
+    });
   }
 
-  /// حذف عنصر محلي فقط
-  void removeLocalItem(String id) {
-    _items.removeWhere((e) => e.id == id);
-    notifyListeners();
+  /// Adds a new item to Firestore. The stream will update the local state.
+  Future<void> addItem(Item item) async {
+    await _firestore.collection('items').doc(item.id).set(item.toJson());
+  }
+
+  /// Updates an item in Firestore. The stream will update the local state.
+  Future<void> updateItem(Item item) async {
+    await _firestore.collection('items').doc(item.id).update(item.toJson());
+  }
+
+  /// Removes an item from Firestore. The stream will update the local state.
+  Future<void> removeItem(String id) async {
+    await _firestore.collection('items').doc(id).delete();
   }
 
   /// تبادل عنصرين بين مستخدمين عبر Firestore

@@ -24,6 +24,25 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ItemProvider>(
+          // Provides an initial, empty provider for the logged-out state.
+          create: (_) => ItemProvider(currentUserId: null, items: []),
+          // When AuthProvider changes, this rebuilds ItemProvider.
+          update: (ctx, auth, previousItemProvider) {
+            // If the user's login status changes, we create a new provider.
+            // This ensures data is cleared upon logout.
+            if (auth.currentUser?.id != previousItemProvider?.currentUserId) {
+              final newProvider = ItemProvider(currentUserId: auth.currentUser?.id);
+              // If the user is logged in, immediately trigger a data fetch.
+              if (auth.currentUser != null) {
+                newProvider.fetchAndSetItems();
+              }
+              return newProvider;
+            }
+            // If the user ID is the same, we can return the previous provider.
+            return previousItemProvider!;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (ctx, themeProv, _) {
@@ -42,24 +61,12 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
             ),
-            themeMode: themeProv.themeMode, // ⚡ الربط مع ThemeProvider
-            initialRoute: '/',
+            themeMode: themeProv.themeMode,
+            home: const SplashScreen(),
             routes: {
-              '/': (ctx) => const SplashScreen(),
               '/login': (ctx) => const LoginScreen(),
               '/onboarding': (ctx) => const OnboardingScreen(),
-            },
-            onGenerateRoute: (settings) {
-              if (settings.name == '/home') {
-                final userId = settings.arguments as String;
-                return MaterialPageRoute(
-                  builder: (ctx) => ChangeNotifierProvider(
-                    create: (_) => ItemProvider(currentUserId: userId),
-                    child: HomeScreen(currentUserId: userId),
-                  ),
-                );
-              }
-              return null;
+              '/home': (ctx) => const HomeScreen(),
             },
           );
         },

@@ -6,8 +6,7 @@ import '../providers/item_provider.dart';
 import 'item_list_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final String currentUserId;
-  const HomeScreen({super.key, required this.currentUserId});
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

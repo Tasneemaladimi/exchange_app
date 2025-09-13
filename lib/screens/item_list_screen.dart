@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/item_provider.dart';
-import '../models/item.dart';
 import 'add_item_screen.dart';
 import 'item_detail_screen.dart';
-import '../widgets/item_card.dart';
-import 'package:uuid/uuid.dart';
 
 class ItemListScreen extends StatelessWidget {
   final String category;
@@ -48,17 +45,23 @@ class ItemListScreen extends StatelessWidget {
               },
             ),
             floatingActionButton: FloatingActionButton(
-  backgroundColor: Theme.of(context).primaryColor,
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AddItemScreen(currentUserId: currentUserId), // ⚡ تمرير معرف المستخدم
+        backgroundColor: Theme.of(context).primaryColor,
+        onPressed: () {
+          final userId = itemProv.currentUserId;
+          if (userId != null) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AddItemDialog(currentUserId: userId),
+            );
+          } else {
+            // Handle case where user is not logged in, perhaps show a message
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("You must be logged in to add items.")),
+            );
+          }
+        },
+        child: const Icon(Icons.add, size: 30),
       ),
-    );
-  },
-  child: const Icon(Icons.add, size: 30),
-),
 
     );
   }
