@@ -53,14 +53,16 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           const SizedBox(height: 10),
           Expanded(
             child: StreamBuilder<List<Product>>(
-              stream: productProv.otherUsersProductsStream(),
+              // CORRECTED: Replaced non-existent method with the correct one.
+              stream: productProv.getMarketplaceProductsStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No products available for exchange"));
+                  return const Center(
+                      child: Text("No products available for exchange"));
                 }
 
                 final otherProducts = snapshot.data!;
@@ -91,11 +93,14 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: ElevatedButton(
-              onPressed: (mySelectedProduct != null && otherSelectedProduct != null)
+              onPressed: (mySelectedProduct != null &&
+                      otherSelectedProduct != null)
                   ? () async {
-                      await productProv.exchangeProducts(mySelectedProduct!, otherSelectedProduct!);
+                      await productProv.exchangeProducts(
+                          mySelectedProduct!, otherSelectedProduct!);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Products exchanged successfully")),
+                        const SnackBar(
+                            content: Text("Products exchanged successfully")),
                       );
                       setState(() {
                         mySelectedProduct = null;
@@ -105,7 +110,8 @@ class _ExchangeScreenState extends State<ExchangeScreen> {
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4E6CFF),
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
               ),
               child: const Text("Exchange", style: TextStyle(fontSize: 18)),
             ),

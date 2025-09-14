@@ -28,9 +28,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthProvider, ProductProvider>(
           create: (_) => ProductProvider(currentUserId: null, products: []),
           update: (ctx, auth, previousProductProvider) {
-            if (auth.currentUser?.id != previousProductProvider?.currentUserId) {
-              final newProvider = ProductProvider(currentUserId: auth.currentUser?.id);
-              if (auth.currentUser != null) {
+            // CORRECTED: Changed auth.currentUser to auth.user
+            if (auth.user?.uid != previousProductProvider?.currentUserId) {
+              final newProvider =
+                  ProductProvider(currentUserId: auth.user?.uid);
+              if (auth.user != null) {
                 newProvider.fetchMyProducts();
               }
               return newProvider;
@@ -41,7 +43,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProxyProvider<AuthProvider, ExchangeProvider>(
           create: (_) => ExchangeProvider(null),
           update: (ctx, auth, previousExchangeProvider) {
-            return ExchangeProvider(auth.currentUser?.id);
+            // CORRECTED: Changed auth.currentUser to auth.user
+            return ExchangeProvider(auth.user?.uid);
           },
         ),
       ],
@@ -54,13 +57,15 @@ class MyApp extends StatelessWidget {
               primaryColor: const Color(0xFF4E6CFF),
               scaffoldBackgroundColor: Colors.white,
               brightness: Brightness.light,
-              appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
+              appBarTheme:
+                  const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
             ),
             darkTheme: ThemeData(
               primaryColor: const Color(0xFF4E6CFF),
               scaffoldBackgroundColor: Colors.black,
               brightness: Brightness.dark,
-              appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
+              appBarTheme:
+                  const AppBarTheme(backgroundColor: Color(0xFF4E6CFF)),
             ),
             themeMode: themeProv.themeMode,
             home: const SplashScreen(),

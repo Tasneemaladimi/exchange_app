@@ -7,8 +7,8 @@ plugins {
 
 android {
     namespace = "com.example.exchange_app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = "29.0.14033849" // 🔹 خليه مربوط بـ flutter بدل ما تكتبه ثابت
+    compileSdk =35 
+    ndkVersion = "27.0.12077973" 
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId = "com.example.exchange_app"
         minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

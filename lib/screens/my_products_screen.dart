@@ -39,7 +39,8 @@ class MyProductsScreen extends StatelessWidget {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          final userId = authProvider.currentUser?.id;
+          // CORRECTED: Changed authProvider.currentUser?.id to authProvider.user?.id
+          final userId = authProvider.user?.uid;
           if (userId != null) {
             showDialog(
               context: context,
